@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Live Dashboard</title>
+    <!-- Tailwind CSS for sleek, scannable UI -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- MQTT.js via CDN for WebSockets connection -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <!-- Chart.js via CDN for real-time traffic visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Header & Connection Status -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                    <span>📡</span> MQTT Live Dashboard
+                </h1>
+                <p class="text-sm text-slate-400 mt-1">Host: <span class="text-slate-300 font-mono">wss://broker.hivemq.com:8884/mqtt</span> <span class="text-slate-500">(HiveMQ WebSocket)</span></p>
+            </div>
+            <div class="flex items-center gap-3 bg-slate-900 px-4 py-2 rounded-lg border border-slate-700">
+                <span id="status-indicator" class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
+                <span id="status-text" class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Dynamic Query Parameter Instructions Banner -->
+        <div class="bg-blue-950/40 border border-blue-800/60 p-4 rounded-xl text-sm text-blue-300">
+            💡 <strong>Tip:</strong> You can configure topics dynamically via URL parameters. Try adding: <span class="font-mono bg-blue-900/40 px-2 py-0.5 rounded text-blue-200">?readTopic=your/input/topic&writeTopic=your/output/topic</span> to your current browser URL.
+        </div>
+
+        <!-- Live LED Status Indicators -->
+        <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md">
+            <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">💡 LED Status</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex items-center gap-4 bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <span id="led-a-indicator" class="w-5 h-5 rounded-full bg-slate-600 ring-4 ring-slate-700/50" aria-label="LED A status unknown"></span>
+                    <div>
+                        <div class="font-semibold text-white">LED A</div>
+                        <div class="text-xs text-slate-400 font-mono">equipo3/tarjeta_a/led</div>
+                        <div id="led-a-status" class="text-sm text-slate-400 mt-1" aria-live="polite">Waiting for status...</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <span id="led-b-indicator" class="w-5 h-5 rounded-full bg-slate-600 ring-4 ring-slate-700/50" aria-label="LED B status unknown"></span>
+                    <div>
+                        <div class="font-semibold text-white">LED B</div>
+                        <div class="text-xs text-slate-400 font-mono">equipo3/tarjeta_b/led</div>
+                        <div id="led-b-status" class="text-sm text-slate-400 mt-1" aria-live="polite">Waiting for status...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Grid Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Left Side: Configured Topics & Message Publisher -->
+            <div class="md:col-span-1 space-y-6">
+                <!-- Topic Configurations Block -->
+                <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md">
+                    <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">📌 Target Topics</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Subscribe (Read) Topic</label>
+                            <input id="read-topic-input" type="text" class="w-full font-mono text-sm bg-slate-900 px-3 py-2 rounded border border-slate-700 text-emerald-400 focus:outline-none focus:border-emerald-500" aria-label="Subscribe (Read) Topic" autocomplete="off">
+                        </div>
+                        <div>
+                            <label class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Publish (Write) Topic</label>
+                            <input id="write-topic-input" type="text" class="w-full font-mono text-sm bg-slate-900 px-3 py-2 rounded border border-slate-700 text-cyan-400 focus:outline-none focus:border-cyan-500" aria-label="Publish (Write) Topic" autocomplete="off">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Message Publisher Form -->
+                <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md">
+                    <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">🚀 Publish Message</h2>
+                    <form id="publish-form" class="space-y-4">
+                        <div>
+                            <label for="message-input" class="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Payload / Message String</label>
+                            <textarea id="message-input" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm font-mono text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 placeholder-slate-600" placeholder="Type text or JSON payload here..." required></textarea>
+                        </div>
+                        <button type="submit" id="publish-btn" disabled class="w-full py-2.5 px-4 bg-slate-700 text-slate-400 rounded-lg font-medium cursor-not-allowed transition duration-200 shadow-md">
+                            Broker Disconnected
+                        </button>
+                    </form>
+                </section>
+            </div>
+
+            <!-- Right Side: Metrics Graph & Live Message Log Stream -->
+            <div class="md:col-span-2 space-y-6">
+                <!-- Chart Visualization Component -->
+                <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md">
+                    <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">📈 Messaging Velocity (Messages / Sec)</h2>
+                    <div class="h-64 w-full relative">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Live Raw Log Output -->
+                <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md flex flex-col h-96">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2">📜 Live Raw Message Stream</h2>
+                        <button id="clear-logs" class="text-xs px-2.5 py-1 bg-slate-700 hover:bg-slate-600 rounded font-medium border border-slate-600 text-slate-300 transition">Clear</button>
+                    </div>
+                    <div id="log-container" class="flex-1 bg-slate-900 rounded-lg border border-slate-700 p-4 overflow-y-auto font-mono text-xs space-y-2 text-slate-300 scroll-smooth">
+                        <div id="waiting-message-placeholder" class="text-slate-500 italic">Waiting for incoming messages to be published...</div>
+                    </div>
+                </section>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Application Controller Logic -->
+    <script>
+        // Parse Query Strings safely to assign Dynamic Sub/Pub Profiles
+        const urlParams = new URLSearchParams(window.location.search);
+        let READ_TOPIC = urlParams.get('readTopic') || 'equipo3/#';
+        let WRITE_TOPIC = urlParams.get('writeTopic') || 'equipo3/tarjeta_a/boton';
+
+        // Initialize editable topic fields from URL parameters or defaults
+        const readTopicInput = document.getElementById('read-topic-input');
+        const writeTopicInput = document.getElementById('write-topic-input');
+        readTopicInput.value = READ_TOPIC;
+        writeTopicInput.value = WRITE_TOPIC;
+
+        // Browser MQTT.js clients require WebSockets. HiveMQ's TCP endpoint is
+        // broker.hivemq.com:1883; use its secure WebSocket endpoint in this page.
+        const BROKER_URL = 'wss://broker.hivemq.com:8884/mqtt';
+        const MQTT_OPTIONS = {
+            clientId: 'web_dashboard_' + Math.random().toString(16).substr(2, 8),
+            clean: true,
+            connectTimeout: 5000
+        };
+
+        // UI States Reference Pointers
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        const publishBtn = document.getElementById('publish-btn');
+        const logContainer = document.getElementById('log-container');
+        const publishForm = document.getElementById('publish-form');
+        const messageInput = document.getElementById('message-input');
+        const LED_TOPICS = {
+            'equipo3/tarjeta_a/led': { indicator: document.getElementById('led-a-indicator'), status: document.getElementById('led-a-status'), name: 'LED A' },
+            'equipo3/tarjeta_b/led': { indicator: document.getElementById('led-b-indicator'), status: document.getElementById('led-b-status'), name: 'LED B' }
+        };
+
+        function updateLedStatus(topic, payload) {
+            const led = LED_TOPICS[topic];
+            if (!led) return;
+
+            const value = payload.trim();
+            const normalizedValue = value.toLowerCase();
+            const isOn = ['1', 'true', 'on', 'high', 'encendido'].includes(normalizedValue);
+            const isOff = ['0', 'false', 'off', 'low', 'apagado'].includes(normalizedValue);
+
+            led.status.textContent = value || '(empty payload)';
+            if (isOn) {
+                led.indicator.className = 'w-5 h-5 rounded-full bg-emerald-400 ring-4 ring-emerald-500/30 shadow-lg shadow-emerald-500/40';
+                led.indicator.setAttribute('aria-label', `${led.name} on`);
+                led.status.className = 'text-sm text-emerald-400 mt-1 font-semibold';
+            } else if (isOff) {
+                led.indicator.className = 'w-5 h-5 rounded-full bg-slate-600 ring-4 ring-slate-700/50';
+                led.indicator.setAttribute('aria-label', `${led.name} off`);
+                led.status.className = 'text-sm text-slate-300 mt-1 font-semibold';
+            } else {
+                led.indicator.className = 'w-5 h-5 rounded-full bg-amber-400 ring-4 ring-amber-500/30';
+                led.indicator.setAttribute('aria-label', `${led.name} status received`);
+                led.status.className = 'text-sm text-amber-300 mt-1 font-semibold';
+            }
+        }
+
+        readTopicInput.addEventListener('change', () => {
+            const newTopic = readTopicInput.value.trim();
+            if (!newTopic) {
+                readTopicInput.value = READ_TOPIC;
+                appendSystemLog('Topic Error: Subscribe topic cannot be empty.');
+                return;
+            }
+            if (newTopic === READ_TOPIC) return;
+
+            const previousTopic = READ_TOPIC;
+            READ_TOPIC = newTopic;
+            readTopicInput.value = READ_TOPIC;
+
+            if (client.connected) {
+                client.unsubscribe(previousTopic, (err) => {
+                    if (err) appendSystemLog(`System Error: Failed to unsubscribe from [${previousTopic}]`);
+                });
+                client.subscribe(READ_TOPIC, (err) => {
+                    if (!err) {
+                        appendSystemLog(`System: Successfully subscribed to target topic: [${READ_TOPIC}]`);
+                    } else {
+                        appendSystemLog(`System Error: Failed subscription protocol to [${READ_TOPIC}]`);
+                    }
+                });
+            }
+        });
+
+        writeTopicInput.addEventListener('change', () => {
+            const newTopic = writeTopicInput.value.trim();
+            if (!newTopic) {
+                writeTopicInput.value = WRITE_TOPIC;
+                appendSystemLog('Topic Error: Publish topic cannot be empty.');
+                return;
+            }
+            WRITE_TOPIC = newTopic;
+            writeTopicInput.value = WRITE_TOPIC;
+            appendSystemLog(`System: Publish topic set to [${WRITE_TOPIC}]`);
+        });
+
+        // Traffic Tracker Aggregator Variables
+        let incomingMessageCounter = 0;
+        const maxDataPoints = 15;
+        const chartLabels = Array(maxDataPoints).fill('');
+        const chartDataPoints = Array(maxDataPoints).fill(0);
+
+        // Instantiating Chart.js Instance Framework
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        const trafficChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Received Message Velocity',
+                    data: chartDataPoints,
+                    borderColor: 'rgb(52, 211, 153)', // Emerald Accent
+                    backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' }, beginAtZero: true }
+                }
+            }
+        });
+
+        // Initialize Native Broker Client Thread Loop via MQTTJS
+        const client = mqtt.connect(BROKER_URL, MQTT_OPTIONS);
+
+        client.on('connect', () => {
+            statusIndicator.className = 'w-3 h-3 rounded-full bg-emerald-500';
+            statusText.innerText = 'Connected';
+            statusText.className = 'text-sm font-semibold text-emerald-400 uppercase tracking-wider';
+            
+            publishBtn.disabled = false;
+            publishBtn.innerText = 'Send Message';
+            publishBtn.className = 'w-full py-2.5 px-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-medium transition duration-200 shadow-md cursor-pointer';
+
+            // Register Topic Listening Pipeline
+            client.subscribe(READ_TOPIC, (err) => {
+                if (!err) {
+                    appendSystemLog(`System: Successfully subscribed to target topic: [${READ_TOPIC}]`);
+                } else {
+                    appendSystemLog(`System Error: Failed subscription protocol to [${READ_TOPIC}]`);
+                }
+            });
+            client.subscribe(Object.keys(LED_TOPICS), (err) => {
+                if (err) {
+                    appendSystemLog('System Error: Failed to subscribe to LED status topics.');
+                } else {
+                    appendSystemLog('System: Subscribed to LED A and LED B status topics.');
+                }
+            });
+        });
+
+        client.on('error', (err) => {
+            appendSystemLog(`System Error: Connection failures experienced. ${err.message}`);
+        });
+
+        client.on('close', () => {
+            statusIndicator.className = 'w-3 h-3 rounded-full bg-rose-500';
+            statusText.innerText = 'Disconnected';
+            statusText.className = 'text-sm font-semibold text-rose-400 uppercase tracking-wider';
+
+            publishBtn.disabled = true;
+            publishBtn.innerText = 'Broker Disconnected';
+            publishBtn.className = 'w-full py-2.5 px-4 bg-slate-700 text-slate-400 rounded-lg font-medium cursor-not-allowed transition duration-200 shadow-md';
+        });
+
+        // Ingress Traffic Processing Hooks
+        client.on('message', (topic, payload) => {
+            incomingMessageCounter++;
+            const cleanPayload = payload.toString();
+            updateLedStatus(topic, cleanPayload);
+            const now = new Date().toLocaleTimeString();
+                
+            // Remove only the initial placeholder; preserve prior stream entries.
+            const waitingPlaceholder = document.getElementById('waiting-message-placeholder');
+            if (waitingPlaceholder) waitingPlaceholder.remove();
+
+            // Render every received message, including the dedicated LED topics.
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = 'p-2 bg-slate-800/60 rounded border border-slate-700/50 flex flex-col gap-1';
+            messageWrapper.innerHTML = `
+                <div class="flex justify-between items-center text-[10px] text-slate-400">
+                    <span class="font-bold text-emerald-400">INBOUND · ${escapeHtml(topic)}</span>
+                    <span>${now}</span>
+                </div>
+                <div class="text-slate-100 break-all whitespace-pre-wrap">${escapeHtml(cleanPayload)}</div>
+            `;
+            logContainer.appendChild(messageWrapper);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        });
+
+        // Egress Traffic Publishing Handlers
+        publishForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const messageBody = messageInput.value;
+            const publishTopic = WRITE_TOPIC;
+
+            if (client.connected && messageBody.trim() !== '') {
+                client.publish(publishTopic, messageBody, { qos: 0 }, (error) => {
+                    if(!error) {
+                        const now = new Date().toLocaleTimeString();
+                        appendSystemLog(`Sent message to [${publishTopic}] successfully at ${now}`);
+                        messageInput.value = '';
+                    } else {
+                        appendSystemLog(`Publish Error: ${error}`);
+                    }
+                });
+            }
+        });
+
+        // Interface helper actions
+        document.getElementById('clear-logs').addEventListener('click', () => {
+            logContainer.innerHTML = '<div class="text-slate-500 italic">Logs cleared.</div>';
+        });
+
+        function appendSystemLog(text) {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = 'text-slate-400 italic text-[11px] border-l-2 border-slate-600 pl-2 py-0.5';
+            messageWrapper.innerText = text;
+            logContainer.appendChild(messageWrapper);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Live rolling metric timing engine updates at 1Hz (1 second windows)
+        setInterval(() => {
+            const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            chartLabels.push(timeString);
+            chartDataPoints.push(incomingMessageCounter);
+
+            if (chartLabels.length > maxDataPoints) {
+                chartLabels.shift();
+                chartDataPoints.shift();
+            }
+
+            trafficChart.update();
+            incomingMessageCounter = 0; // Reset metrics bucket window
+        }, 1000);
+
+    </script>
+</body>
+</html>
