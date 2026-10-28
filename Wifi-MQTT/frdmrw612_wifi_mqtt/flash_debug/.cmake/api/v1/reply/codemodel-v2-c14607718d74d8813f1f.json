@@ -9626,14 +9626,14 @@
 				{
 					"directoryIndex" : 3,
 					"id" : "footprint::@7f73aa44d57b7279e1d5",
-					"jsonFile" : "target-footprint-flash_debug-7499d6dad50dd1aef070.json",
+					"jsonFile" : "target-footprint-flash_debug-99a9f7b18b91f968a38a.json",
 					"name" : "footprint",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "frdmrw612_wifi_mqtt::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-frdmrw612_wifi_mqtt-flash_debug-68d06139cebbfd486450.json",
+					"jsonFile" : "target-frdmrw612_wifi_mqtt-flash_debug-b8ed59897322404f909e.json",
 					"name" : "frdmrw612_wifi_mqtt",
 					"projectIndex" : 0
 				},

@@ -281,8 +281,8 @@ CMAKE_STRIP:FILEPATH=C:/Users/josem/.mcuxpressotools/arm-gnu-toolchain-14.2.rel1
 //Path to a program.
 CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 
-//The CMake toolchain file
-CMAKE_TOOLCHAIN_FILE:FILEPATH=C:/Users/josem/Documents/mcuxsdk/mcuxsdk/mcuxsdk/cmake/toolchain/armgcc.cmake
+//No help, variable specified on the command line.
+CMAKE_TOOLCHAIN_FILE:UNINITIALIZED=c:/Users/josem/Documents/mcuxsdk/mcuxsdk/mcuxsdk/cmake/toolchain/armgcc.cmake
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -565,6 +565,8 @@ _Python3_EXECUTABLE_DEBUG:INTERNAL=_Python3_EXECUTABLE_DEBUG-NOTFOUND
 //Python3 Properties
 _Python3_INTERPRETER_PROPERTIES:INTERNAL=Python;3;12;12;64;<none>;cp312-win_amd64.pyd;;C:\Users\josem\.mcuxpressotools\python-3.12\Lib;C:\Users\josem\.mcuxpressotools\.mcux-venv-3.12\Lib;C:\Users\josem\.mcuxpressotools\.mcux-venv-3.12\Lib\site-packages;C:\Users\josem\.mcuxpressotools\.mcux-venv-3.12\Lib\site-packages
 _Python3_INTERPRETER_SIGNATURE:INTERNAL=d1f163b51d655ace57ef6b63e5422367
+//Interpreter reason failure
+_Python3_Interpreter_REASON_FAILURE:INTERNAL=
 //NumPy reason failure
 _Python3_NumPy_REASON_FAILURE:INTERNAL=
 

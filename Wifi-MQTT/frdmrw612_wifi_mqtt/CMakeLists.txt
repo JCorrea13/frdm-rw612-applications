@@ -23,6 +23,9 @@ mcux_add_include(
 mcux_add_source(
     SOURCES mqtt_common/mqtt_freertos.c
             mqtt_common/mqtt_freertos.h
+            __repo__/mcuxsdk/middleware/lwip/src/apps/mdns/mdns.c
+            __repo__/mcuxsdk/middleware/lwip/src/apps/mdns/mdns_domain.c
+            __repo__/mcuxsdk/middleware/lwip/src/apps/mdns/mdns_out.c
 )
 
 mcux_add_source(
@@ -34,6 +37,8 @@ mcux_add_source(
             lwippools.h
             wifi_config/wifi_config.h
             wifi_mqtt.c
+            wifi_provisioning.c
+            wifi_provisioning.h
 )
 
 mcux_add_include(

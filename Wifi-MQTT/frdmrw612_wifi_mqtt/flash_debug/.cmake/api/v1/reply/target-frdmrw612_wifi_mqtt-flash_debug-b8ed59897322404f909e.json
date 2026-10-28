@@ -1559,7 +1559,7 @@
 			{
 				"command" : 11,
 				"file" : 1,
-				"line" : 39,
+				"line" : 44,
 				"parent" : 0
 			},
 			{
@@ -1589,7 +1589,7 @@
 			{
 				"command" : 11,
 				"file" : 1,
-				"line" : 151,
+				"line" : 156,
 				"parent" : 0
 			},
 			{
@@ -6586,76 +6586,106 @@
 				"parent" : 1102
 			},
 			{
+				"command" : 12,
+				"file" : 5,
+				"line" : 232,
+				"parent" : 1102
+			},
+			{
+				"command" : 12,
+				"file" : 5,
+				"line" : 232,
+				"parent" : 1102
+			},
+			{
+				"command" : 12,
+				"file" : 5,
+				"line" : 232,
+				"parent" : 1102
+			},
+			{
 				"command" : 13,
 				"file" : 1,
-				"line" : 28,
+				"line" : 31,
 				"parent" : 0
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1105
+				"parent" : 1108
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1105
+				"parent" : 1108
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1105
+				"parent" : 1108
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1105
+				"parent" : 1108
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1105
+				"parent" : 1108
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1105
+				"parent" : 1108
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1105
+				"parent" : 1108
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1105
+				"parent" : 1108
+			},
+			{
+				"command" : 12,
+				"file" : 5,
+				"line" : 232,
+				"parent" : 1108
+			},
+			{
+				"command" : 12,
+				"file" : 5,
+				"line" : 232,
+				"parent" : 1108
 			},
 			{
 				"command" : 13,
 				"file" : 1,
-				"line" : 75,
+				"line" : 80,
 				"parent" : 0
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1114
+				"parent" : 1119
 			},
 			{
 				"command" : 12,
 				"file" : 5,
 				"line" : 232,
-				"parent" : 1114
+				"parent" : 1119
 			}
 		]
 	},
@@ -7275,9 +7305,13 @@
 				730,
 				732,
 				734,
+				736,
 				737,
-				743,
-				745
+				738,
+				740,
+				746,
+				747,
+				750
 			]
 		},
 		{
@@ -8208,13 +8242,14 @@
 				731,
 				733,
 				735,
-				736,
-				738,
 				739,
-				740,
 				741,
 				742,
-				744
+				743,
+				744,
+				745,
+				748,
+				749
 			]
 		},
 		{
@@ -8438,9 +8473,13 @@
 				730,
 				732,
 				734,
+				736,
 				737,
-				743,
-				745
+				738,
+				740,
+				746,
+				747,
+				750
 			]
 		},
 		{
@@ -12396,54 +12435,83 @@
 			"sourceGroupIndex" : 0
 		},
 		{
+			"backtrace" : 1105,
+			"compileGroupIndex" : 0,
+			"path" : "__repo__/mcuxsdk/middleware/lwip/src/apps/mdns/mdns.c",
+			"sourceGroupIndex" : 1
+		},
+		{
 			"backtrace" : 1106,
+			"compileGroupIndex" : 0,
+			"path" : "__repo__/mcuxsdk/middleware/lwip/src/apps/mdns/mdns_domain.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1107,
+			"compileGroupIndex" : 0,
+			"path" : "__repo__/mcuxsdk/middleware/lwip/src/apps/mdns/mdns_out.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1109,
 			"path" : "FreeRTOSConfig.h",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 1107,
+			"backtrace" : 1110,
 			"compileGroupIndex" : 0,
 			"path" : "common/pin_mux.c",
 			"sourceGroupIndex" : 1
 		},
 		{
-			"backtrace" : 1108,
+			"backtrace" : 1111,
 			"path" : "common/pin_mux.h",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 1109,
+			"backtrace" : 1112,
 			"path" : "frdmrw612/FreeRTOSConfigBoard.h",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 1110,
+			"backtrace" : 1113,
 			"path" : "lwipopts.h",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 1111,
+			"backtrace" : 1114,
 			"path" : "lwippools.h",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 1112,
+			"backtrace" : 1115,
 			"path" : "wifi_config/wifi_config.h",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 1113,
+			"backtrace" : 1116,
 			"compileGroupIndex" : 0,
 			"path" : "wifi_mqtt.c",
 			"sourceGroupIndex" : 1
 		},
 		{
-			"backtrace" : 1115,
+			"backtrace" : 1117,
+			"compileGroupIndex" : 0,
+			"path" : "wifi_provisioning.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1118,
+			"path" : "wifi_provisioning.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1120,
 			"path" : "common/app.h",
 			"sourceGroupIndex" : 0
 		},
 		{
-			"backtrace" : 1116,
+			"backtrace" : 1121,
 			"compileGroupIndex" : 0,
 			"path" : "common/hardware_init.c",
 			"sourceGroupIndex" : 1

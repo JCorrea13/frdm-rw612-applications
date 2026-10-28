@@ -15,11 +15,13 @@
 #include "app.h"
 #include "wpl.h"
 #include "timers.h"
+#include "wifi_provisioning.h"
 
 #include "fsl_debug_console.h"
 #include "mqtt_freertos.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "FreeRTOS.h"
 
@@ -66,33 +68,36 @@ static void LinkStatusChangeCallback(bool linkState)
 }
 
 /* Connect to the external AP */
-static void ConnectTo()
+static bool ConnectToSavedNetwork(void)
 {
+    char savedSsid[WPL_WIFI_SSID_LENGTH + 1U];
+    char savedPassword[WPL_WIFI_PASSWORD_LENGTH + 1U];
     int32_t result;
 
-    /* Add Wi-Fi network */
-    result = WPL_AddNetwork(AP_SSID, AP_PASSWORD, WIFI_NETWORK_LABEL);
+    if (!wifi_credentials_loaded(savedSsid, sizeof(savedSsid), savedPassword, sizeof(savedPassword)))
+    {
+        return false;
+    }
+
+    result = WPL_AddNetwork(savedSsid, savedPassword, WIFI_NETWORK_LABEL);
     if (result == WPLRET_SUCCESS)
     {
-        PRINTF("Connecting as client to ssid: %s with password %s\r\n", AP_SSID, AP_PASSWORD);
+        PRINTF("Connecting as client to ssid: %s with password %s\r\n", savedSsid, savedPassword);
         result = WPL_Join(WIFI_NETWORK_LABEL);
     }
 
     if (result != WPLRET_SUCCESS)
     {
-        PRINTF("[!] Cannot connect to Wi-Fi\r\n[!]ssid: %s\r\n[!]passphrase: %s\r\n", AP_SSID, AP_PASSWORD);
+        PRINTF("[!] Cannot connect to saved Wi-Fi credentials\r\n[!]ssid: %s\r\n[!]passphrase: %s\r\n",
+               savedSsid,
+               savedPassword);
+        return false;
+    }
 
-        while (1)
-        {
-            __BKPT(0);
-        }
-    }
-    else
-    {
-        PRINTF("[i] Connected to Wi-Fi\r\nssid: %s\r\n[!]passphrase: %s\r\n", AP_SSID, AP_PASSWORD);
-        char ip[16];
-        WPL_GetIP(ip, 1);
-    }
+    PRINTF("[i] Connected to Wi-Fi\r\nssid: %s\r\n[!]passphrase: %s\r\n", savedSsid, savedPassword);
+    char ip[16];
+    WPL_GetIP(ip, 1);
+    return true;
 }
 
 /*!
@@ -125,9 +130,13 @@ static void main_task(void *arg)
 
     PRINTF("[i] Successfully initialized Wi-Fi module\r\n");
 
-    ConnectTo();
-    /// wait_dns
+    if (!ConnectToSavedNetwork())
+    {
+        PRINTF("[i] No valid saved Wi-Fi credentials or join failed. Entering provisioning mode.\r\n");
+        wifi_enter_provisioning_mode();
+    }
 
+    /// wait_dns
     mqtt_freertos_run_thread(netif_default);
 
     vTaskDelete(NULL);
