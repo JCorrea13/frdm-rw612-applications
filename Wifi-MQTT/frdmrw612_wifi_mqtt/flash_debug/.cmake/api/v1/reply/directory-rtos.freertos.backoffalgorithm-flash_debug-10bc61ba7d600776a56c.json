@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "rtos/freertos/backoffalgorithm",
+		"source" : "C:/Users/josem/Documents/mcuxsdk/mcuxsdk/mcuxsdk/rtos/freertos/backoffalgorithm"
+	}
+}

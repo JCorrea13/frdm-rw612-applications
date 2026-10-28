@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "drivers/pn76/gpadc",
+		"source" : "C:/Users/josem/Documents/mcuxsdk/mcuxsdk/mcuxsdk/drivers/pn76/gpadc"
+	}
+}

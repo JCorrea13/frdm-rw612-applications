@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "drivers/cmu_fm",
+		"source" : "C:/Users/josem/Documents/mcuxsdk/mcuxsdk/mcuxsdk/drivers/cmu_fm"
+	}
+}

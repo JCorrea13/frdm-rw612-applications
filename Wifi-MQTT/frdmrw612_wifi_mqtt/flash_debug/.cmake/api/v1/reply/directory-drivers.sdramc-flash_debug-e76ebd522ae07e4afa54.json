@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "drivers/sdramc",
+		"source" : "C:/Users/josem/Documents/mcuxsdk/mcuxsdk/mcuxsdk/drivers/sdramc"
+	}
+}
