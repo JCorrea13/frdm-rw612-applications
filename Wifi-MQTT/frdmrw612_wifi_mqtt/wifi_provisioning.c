@@ -283,16 +283,39 @@ static bool wifi_parse_key_value(const char *payload, char *ssid, size_t ssidSiz
     return false;
 }
 
-static void wifi_provisioning_start_mdns(void)
+static void mdns_start_cb(void *arg)
 {
-#if LWIP_MDNS_RESPONDER
     mdns_resp_init();
     mdns_resp_add_netif(netif_default, "rw612-prov");
     mdns_resp_add_service(netif_default, "rw612-prov", "_wifi-prov", DNSSD_PROTO_TCP, WIFI_PROVISIONING_PORT, NULL, NULL);
     mdns_resp_announce(netif_default);
+}
+
+static void wifi_provisioning_start_mdns(void)
+{
+#if LWIP_MDNS_RESPONDER
+    if (netif_default == NULL)
+    {
+        PRINTF("[!] No default netif available for mDNS.\r\n");
+        return;
+    }
+
+    tcpip_callback(mdns_start_cb, NULL);
 #else
     PRINTF("[!] mDNS responder is disabled in lwIP build.\r\n");
 #endif
+}
+
+static void wifi_set_default_ap_netif_cb(void *arg)
+{
+    for (struct netif *n = netif_list; n != NULL; n = n->next)
+    {
+        if ((n->flags & NETIF_FLAG_UP) != 0U)
+        {
+            netif_set_default(n);
+            break;
+        }
+    }
 }
 
 void wifi_enter_provisioning_mode(void)
@@ -312,6 +335,8 @@ void wifi_enter_provisioning_mode(void)
         PRINTF("[!] Failed to start provisioning access point.\r\n");
         return;
     }
+
+    tcpip_callback(wifi_set_default_ap_netif_cb, NULL);
 
     wifi_provisioning_start_mdns();
 

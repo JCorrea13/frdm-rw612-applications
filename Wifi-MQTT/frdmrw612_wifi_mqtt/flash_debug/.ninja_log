@@ -337,3 +337,15 @@
 57569	61062	8148656207896247	CMakeFiles/frdmrw612_wifi_mqtt.dir/wifi_provisioning.c.obj	c5f1917b04421d9
 52620	61340	8148656158411811	CMakeFiles/frdmrw612_wifi_mqtt.dir/C_/Users/josem/Documents/mcuxsdk/mcuxsdk/mcuxsdk/middleware/wifi_nxp/wlcmgr/wlan.c.obj	7f27efe3aa569c6e
 61340	62859	8148656245610659	frdmrw612_wifi_mqtt.elf	2544f5e763e33732
+345	1951	8149394535956174	CMakeFiles/frdmrw612_wifi_mqtt.dir/wifi_provisioning.c.obj	c5f1917b04421d9
+1952	3691	8149394552096124	frdmrw612_wifi_mqtt.elf	2544f5e763e33732
+311	1044	8149402482898848	CMakeFiles/frdmrw612_wifi_mqtt.dir/wifi_provisioning.c.obj	c5f1917b04421d9
+1045	1781	8149402490341740	frdmrw612_wifi_mqtt.elf	2544f5e763e33732
+308	1191	8149403256946670	CMakeFiles/frdmrw612_wifi_mqtt.dir/wifi_provisioning.c.obj	c5f1917b04421d9
+1193	1979	8149403265717977	frdmrw612_wifi_mqtt.elf	2544f5e763e33732
+260	3159	8149416956753835	CMakeFiles/frdmrw612_wifi_mqtt.dir/wifi_provisioning.c.obj	c5f1917b04421d9
+3160	4082	8149416985755405	frdmrw612_wifi_mqtt.elf	2544f5e763e33732
+296	1087	8149431660092938	CMakeFiles/frdmrw612_wifi_mqtt.dir/wifi_provisioning.c.obj	c5f1917b04421d9
+1088	2204	8149431667997711	frdmrw612_wifi_mqtt.elf	2544f5e763e33732
+405	3305	8149493836114295	CMakeFiles/frdmrw612_wifi_mqtt.dir/wifi_provisioning.c.obj	c5f1917b04421d9
+3306	5077	8149493865109521	frdmrw612_wifi_mqtt.elf	2544f5e763e33732
