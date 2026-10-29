@@ -38,7 +38,8 @@ MEMORY
 {
   m_flash_config        (RX)  : ORIGIN = 0x08000000, LENGTH = 0x00001000
   m_interrupts          (RX)  : ORIGIN = 0x08001000, LENGTH = 0x00000280
-  m_text                (RX)  : ORIGIN = 0x08001280, LENGTH = 0x001FED80
+  /* Keep the last 4 KiB of the 2 MiB application region for Wi-Fi credentials. */
+  m_text                (RX)  : ORIGIN = 0x08001280, LENGTH = 0x001FDD80
   m_data                (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00123000
   m_mbox1               (RW) : ORIGIN = 0x41380000, LENGTH = 0x00000488
   m_txq1                (RW) : ORIGIN = 0x41380488, LENGTH = 0x00001000

@@ -18,7 +18,16 @@
 #define WIFI_CREDENTIALS_MAGIC 0x57464954u
 #define WIFI_CREDENTIALS_MAX_SSID (WPL_WIFI_SSID_LENGTH + 1U)
 #define WIFI_CREDENTIALS_MAX_PASS (WPL_WIFI_PASSWORD_LENGTH + 1U)
-#define WIFI_CREDENTIALS_STORAGE_ADDR 0x0801F000UL
+#define WIFI_CREDENTIALS_STORAGE_OFFSET 0x001FF000UL
+#define WIFI_CREDENTIALS_PAGE_WORDS (MFLASH_PAGE_SIZE / sizeof(uint32_t))
+
+#if ((WIFI_CREDENTIALS_STORAGE_OFFSET % MFLASH_SECTOR_SIZE) != 0U)
+#error "Wi-Fi credential storage offset must be sector aligned"
+#endif
+
+#if ((MFLASH_PAGE_SIZE % 4U) != 0U)
+#error "mflash page size must be divisible by the word size"
+#endif
 
 #define WIFI_PROVISIONING_BUFFER_SIZE 256
 
@@ -40,6 +49,8 @@ bool wifi_credentials_loaded(char *ssid, size_t ssidLength, char *password, size
 {
     wifi_credentials_store_t stored;
     uint32_t raw[(sizeof(stored) + sizeof(uint32_t) - 1U) / sizeof(uint32_t)] = {0};
+    size_t storedSsidLength;
+    size_t storedPasswordLength;
 
     if ((ssid == NULL) || (password == NULL))
     {
@@ -51,23 +62,28 @@ bool wifi_credentials_loaded(char *ssid, size_t ssidLength, char *password, size
         return false;
     }
 
-    if (mflash_drv_read(WIFI_CREDENTIALS_STORAGE_ADDR, raw, sizeof(stored)) != 0)
+    if (mflash_drv_read(WIFI_CREDENTIALS_STORAGE_OFFSET, raw, sizeof(stored)) != kStatus_Success)
     {
         return false;
     }
 
     memcpy(&stored, raw, sizeof(stored));
-    if ((stored.magic != WIFI_CREDENTIALS_MAGIC) || (stored.ssid[0] == '\0'))
+    if ((stored.magic != WIFI_CREDENTIALS_MAGIC) ||
+        (memchr(stored.ssid, '\0', sizeof(stored.ssid)) == NULL) ||
+        (memchr(stored.password, '\0', sizeof(stored.password)) == NULL) ||
+        (stored.ssid[0] == '\0') || (stored.password[0] == '\0'))
     {
         return false;
     }
 
-    if (strlen(stored.ssid) >= ssidLength)
+    storedSsidLength = strlen(stored.ssid);
+    storedPasswordLength = strlen(stored.password);
+    if (storedSsidLength >= ssidLength)
     {
         return false;
     }
 
-    if (strlen(stored.password) >= passwordLength)
+    if (storedPasswordLength >= passwordLength)
     {
         return false;
     }
@@ -80,7 +96,8 @@ bool wifi_credentials_loaded(char *ssid, size_t ssidLength, char *password, size
 bool wifi_credentials_store(const char *ssid, const char *password)
 {
     wifi_credentials_store_t stored;
-    uint32_t raw[(sizeof(stored) + sizeof(uint32_t) - 1U) / sizeof(uint32_t)] = {0};
+    uint32_t page[WIFI_CREDENTIALS_PAGE_WORDS];
+    wifi_credentials_store_t verified;
     size_t ssidLen;
     size_t passwordLen;
 
@@ -108,14 +125,27 @@ bool wifi_credentials_store(const char *ssid, const char *password)
     strcpy(stored.ssid, ssid);
     strcpy(stored.password, password);
 
-    memcpy(raw, &stored, sizeof(stored));
+    memset(page, 0xFF, sizeof(page));
+    memcpy(page, &stored, sizeof(stored));
 
-    if (mflash_drv_sector_erase(WIFI_CREDENTIALS_STORAGE_ADDR) != 0)
+    if (mflash_drv_sector_erase(WIFI_CREDENTIALS_STORAGE_OFFSET) != kStatus_Success)
     {
         return false;
     }
 
-    if (mflash_drv_page_program(WIFI_CREDENTIALS_STORAGE_ADDR, raw) != 0)
+    if (mflash_drv_page_program(WIFI_CREDENTIALS_STORAGE_OFFSET, page) != kStatus_Success)
+    {
+        return false;
+    }
+
+    memset(page, 0, sizeof(page));
+    if (mflash_drv_read(WIFI_CREDENTIALS_STORAGE_OFFSET, page, MFLASH_PAGE_SIZE) != kStatus_Success)
+    {
+        return false;
+    }
+
+    memcpy(&verified, page, sizeof(verified));
+    if (memcmp(&verified, &stored, sizeof(stored)) != 0)
     {
         return false;
     }
@@ -475,7 +505,7 @@ void wifi_enter_provisioning_mode(void)
     if (received > 0)
     {
         payload[received] = '\0';
-        PRINTF("[i] Received provisioning payload: %s\r\n", payload);
+        PRINTF("[i] Received provisioning payload (%d bytes).\r\n", received);
     }
     closesocket(clientFd);
     closesocket(serverFd);

@@ -13,6 +13,11 @@ const string DefaultServiceType = "_services._dns-sd._udp.local";
 
 var (serviceType, discoveryDurationSeconds) = ParseArguments(args);
 
+/**
+Creds Examples:
+- ssid=HomeWiFi&password=correct-horse-battery-staple
+*/
+
 Console.WriteLine("==================================================");
 Console.WriteLine(" Provisioning Configuration Script");
 Console.WriteLine($" Discovery service type : {serviceType}");

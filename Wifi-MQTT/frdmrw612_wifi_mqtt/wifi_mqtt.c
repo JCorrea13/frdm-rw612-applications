@@ -82,19 +82,17 @@ static bool ConnectToSavedNetwork(void)
     result = WPL_AddNetwork(savedSsid, savedPassword, WIFI_NETWORK_LABEL);
     if (result == WPLRET_SUCCESS)
     {
-        PRINTF("Connecting as client to ssid: %s with password %s\r\n", savedSsid, savedPassword);
+        PRINTF("Connecting as client to ssid: %s\r\n", savedSsid);
         result = WPL_Join(WIFI_NETWORK_LABEL);
     }
 
     if (result != WPLRET_SUCCESS)
     {
-        PRINTF("[!] Cannot connect to saved Wi-Fi credentials\r\n[!]ssid: %s\r\n[!]passphrase: %s\r\n",
-               savedSsid,
-               savedPassword);
+        PRINTF("[!] Cannot connect to saved Wi-Fi credentials for SSID: %s\r\n", savedSsid);
         return false;
     }
 
-    PRINTF("[i] Connected to Wi-Fi\r\nssid: %s\r\n[!]passphrase: %s\r\n", savedSsid, savedPassword);
+    PRINTF("[i] Connected to Wi-Fi\r\nSSID: %s\r\n", savedSsid);
     char ip[16];
     WPL_GetIP(ip, 1);
     return true;
