@@ -52,11 +52,6 @@ browser.ServiceAdded += (_, eventArgs) =>
 
 browser.ServiceRemoved += (_, eventArgs) =>
 {
-    lock (discoveredServices)
-    {
-        discoveredServices.Remove(eventArgs.Announcement.Instance);
-    }
-
     Console.WriteLine($"[-] Removed service: {eventArgs.Announcement.Instance}");
 };
 
