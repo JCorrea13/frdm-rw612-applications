@@ -15,6 +15,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MDNS_SERVICE_ID "rw612-leda-prov-equipo3"
+#define MDNS_SERVICE_TYPE "_leda-prov"
+
 #define WIFI_CREDENTIALS_MAGIC 0x57464954u
 #define WIFI_CREDENTIALS_MAX_SSID (WPL_WIFI_SSID_LENGTH + 1U)
 #define WIFI_CREDENTIALS_MAX_PASS (WPL_WIFI_PASSWORD_LENGTH + 1U)
@@ -358,7 +361,7 @@ static void mdns_start_cb(void *arg)
         return;
     }
 
-    result = mdns_resp_add_netif(apNetif, "rw612-prov");
+    result = mdns_resp_add_netif(apNetif, MDNS_SERVICE_ID);
     if (result != ERR_OK)
     {
         PRINTF("[!] Failed to register provisioning netif with mDNS: %d\r\n", result);
@@ -366,7 +369,7 @@ static void mdns_start_cb(void *arg)
     }
 
     s_provisioningNetif = apNetif;
-    serviceId = mdns_resp_add_service(apNetif, "rw612-prov", "_wifi-prov", DNSSD_PROTO_TCP,
+    serviceId = mdns_resp_add_service(apNetif, MDNS_SERVICE_ID, MDNS_SERVICE_TYPE, DNSSD_PROTO_TCP,
                                       WIFI_PROVISIONING_PORT, NULL, NULL);
     if (serviceId < 0)
     {

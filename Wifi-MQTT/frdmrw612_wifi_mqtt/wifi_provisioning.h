@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define WIFI_PROVISIONING_SSID "RW612_Provisioning"
+#define WIFI_PROVISIONING_SSID "RW612_Provisioning_Equipo3"
 #define WIFI_PROVISIONING_PASSWORD "12345678"
 #define WIFI_PROVISIONING_PORT 15000
 

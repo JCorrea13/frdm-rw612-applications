@@ -14,7 +14,10 @@ const string DefaultServiceType = "_services._dns-sd._udp.local";
 var (serviceType, discoveryDurationSeconds) = ParseArguments(args);
 
 /**
-Creds Examples:
+Command Example:
+- dotnet .\ProvisioningConfigurationScript.cs --duration 3  --type _wifi-prov._tcp
+
+Creds Example:
 - ssid=HomeWiFi&password=correct-horse-battery-staple
 */
 
