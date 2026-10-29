@@ -2,6 +2,7 @@
 
 #include "lwip/apps/mdns.h"
 #include "lwip/inet.h"
+#include "lwip/ip4_addr.h"
 #include "lwip/netif.h"
 #include "lwip/sockets.h"
 #include "lwip/tcpip.h"
@@ -23,6 +24,10 @@
 
 #define WIFI_PROVISIONING_FIELD_SSID "ssid"
 #define WIFI_PROVISIONING_FIELD_PASSWORD "password"
+
+static bool s_mdnsInitialized;
+static struct netif *s_provisioningNetif;
+static ip4_addr_t s_provisioningApAddress;
 
 typedef struct
 {
@@ -283,38 +288,125 @@ static bool wifi_parse_key_value(const char *payload, char *ssid, size_t ssidSiz
     return false;
 }
 
-static void mdns_start_cb(void *arg)
+static struct netif *wifi_find_ap_netif(void)
 {
-    mdns_resp_init();
-    mdns_resp_add_netif(netif_default, "rw612-prov");
-    mdns_resp_add_service(netif_default, "rw612-prov", "_wifi-prov", DNSSD_PROTO_TCP, WIFI_PROVISIONING_PORT, NULL, NULL);
-    mdns_resp_announce(netif_default);
+    for (struct netif *netif = netif_list; netif != NULL; netif = netif->next)
+    {
+        if (netif_is_up(netif) && ip4_addr_cmp(netif_ip4_addr(netif), &s_provisioningApAddress))
+        {
+            return netif;
+        }
+    }
+
+    return NULL;
 }
 
-static void wifi_provisioning_start_mdns(void)
+static void mdns_start_cb(void *arg)
 {
 #if LWIP_MDNS_RESPONDER
-    if (netif_default == NULL)
+    struct netif *apNetif = wifi_find_ap_netif();
+    err_t result;
+    s8_t serviceId;
+
+    LWIP_UNUSED_ARG(arg);
+
+    if (apNetif == NULL)
     {
-        PRINTF("[!] No default netif available for mDNS.\r\n");
+        PRINTF("[!] AP netif with the WPL-reported address was not found/up; mDNS is not started.\r\n");
         return;
     }
 
-    tcpip_callback(mdns_start_cb, NULL);
+    if (!s_mdnsInitialized)
+    {
+        mdns_resp_init();
+        s_mdnsInitialized = true;
+    }
+
+    if (mdns_resp_netif_active(apNetif))
+    {
+        PRINTF("[!] mDNS is already registered on the provisioning AP netif.\r\n");
+        return;
+    }
+
+    result = mdns_resp_add_netif(apNetif, "rw612-prov");
+    if (result != ERR_OK)
+    {
+        PRINTF("[!] Failed to register provisioning netif with mDNS: %d\r\n", result);
+        return;
+    }
+
+    s_provisioningNetif = apNetif;
+    serviceId = mdns_resp_add_service(apNetif, "rw612-prov", "_wifi-prov", DNSSD_PROTO_TCP,
+                                      WIFI_PROVISIONING_PORT, NULL, NULL);
+    if (serviceId < 0)
+    {
+        PRINTF("[!] Failed to register provisioning mDNS service: %d\r\n", serviceId);
+        (void)mdns_resp_remove_netif(apNetif);
+        s_provisioningNetif = NULL;
+        return;
+    }
+
+    PRINTF("[i] mDNS probing started on provisioning AP netif; service registration id=%d.\r\n",
+           serviceId);
+    /* mDNS announces automatically after probing succeeds. */
 #else
     PRINTF("[!] mDNS responder is disabled in lwIP build.\r\n");
 #endif
 }
 
-static void wifi_set_default_ap_netif_cb(void *arg)
+static void mdns_stop_cb(void *arg)
 {
-    for (struct netif *n = netif_list; n != NULL; n = n->next)
+#if LWIP_MDNS_RESPONDER
+    LWIP_UNUSED_ARG(arg);
+
+    if ((s_provisioningNetif != NULL) && mdns_resp_netif_active(s_provisioningNetif))
     {
-        if ((n->flags & NETIF_FLAG_UP) != 0U)
-        {
-            netif_set_default(n);
-            break;
-        }
+        (void)mdns_resp_remove_netif(s_provisioningNetif);
+    }
+
+    s_provisioningNetif = NULL;
+#else
+    LWIP_UNUSED_ARG(arg);
+#endif
+}
+
+static void wifi_provisioning_start_mdns(void)
+{
+#if LWIP_MDNS_RESPONDER
+    char apAddress[16];
+
+    if ((WPL_GetIP(apAddress, 0) != WPLRET_SUCCESS) ||
+        !ip4addr_aton(apAddress, &s_provisioningApAddress))
+    {
+        PRINTF("[!] Could not retrieve/parse the provisioning AP IPv4 address; mDNS is not started.\r\n");
+        return;
+    }
+
+    if (tcpip_callback(mdns_start_cb, NULL) != ERR_OK)
+    {
+        PRINTF("[!] Could not queue provisioning mDNS startup in the TCP/IP thread.\r\n");
+    }
+#else
+    PRINTF("[!] mDNS responder is disabled in lwIP build.\r\n");
+#endif
+}
+
+static void wifi_provisioning_stop_mdns(void)
+{
+#if LWIP_MDNS_RESPONDER
+    if (tcpip_callback_wait(mdns_stop_cb, NULL) != ERR_OK)
+    {
+        PRINTF("[!] Could not cleanly stop provisioning mDNS in the TCP/IP thread.\r\n");
+    }
+#endif
+}
+
+static void wifi_provisioning_stop_ap(void)
+{
+    wifi_provisioning_stop_mdns();
+    if (WPL_Stop_AP() != WPLRET_SUCCESS)
+    {
+        PRINTF("[!] Failed to stop provisioning access point.\r\n");
     }
 }
 
@@ -336,15 +428,13 @@ void wifi_enter_provisioning_mode(void)
         return;
     }
 
-    tcpip_callback(wifi_set_default_ap_netif_cb, NULL);
-
     wifi_provisioning_start_mdns();
 
     serverFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (serverFd < 0)
     {
         PRINTF("[!] Failed to create provisioning socket.\r\n");
-        WPL_Stop_AP();
+        wifi_provisioning_stop_ap();
         return;
     }
 
@@ -357,7 +447,7 @@ void wifi_enter_provisioning_mode(void)
     {
         PRINTF("[!] Failed to bind provisioning socket on port %d.\r\n", WIFI_PROVISIONING_PORT);
         closesocket(serverFd);
-        WPL_Stop_AP();
+        wifi_provisioning_stop_ap();
         return;
     }
 
@@ -365,7 +455,7 @@ void wifi_enter_provisioning_mode(void)
     {
         PRINTF("[!] Failed to listen on provisioning socket.\r\n");
         closesocket(serverFd);
-        WPL_Stop_AP();
+        wifi_provisioning_stop_ap();
         return;
     }
 
@@ -376,7 +466,7 @@ void wifi_enter_provisioning_mode(void)
     {
         PRINTF("[!] Provisioning client connection failed.\r\n");
         closesocket(serverFd);
-        WPL_Stop_AP();
+        wifi_provisioning_stop_ap();
         return;
     }
 
@@ -393,19 +483,19 @@ void wifi_enter_provisioning_mode(void)
     if (!wifi_parse_key_value(payload, ssid, sizeof(ssid), password, sizeof(password)))
     {
         PRINTF("[!] Invalid provisioning payload received.\r\n");
-        WPL_Stop_AP();
+        wifi_provisioning_stop_ap();
         return;
     }
 
     if (!wifi_credentials_store(ssid, password))
     {
         PRINTF("[!] Failed to store provisioning credentials.\r\n");
-        WPL_Stop_AP();
+        wifi_provisioning_stop_ap();
         return;
     }
 
     PRINTF("[i] Provisioning credentials stored. SSID=%s\r\n", ssid);
-    WPL_Stop_AP();
+    wifi_provisioning_stop_ap();
 
     NVIC_SystemReset();
 }

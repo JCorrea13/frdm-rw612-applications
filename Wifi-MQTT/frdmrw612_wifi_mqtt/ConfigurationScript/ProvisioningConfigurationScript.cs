@@ -26,7 +26,7 @@ var browser = new ServiceBrowser();
 browser.ServiceAdded += (_, eventArgs) =>
 {
     var announcement = eventArgs.Announcement;
-    /*if (!IsTcpService(announcement.Type))
+    if (!IsTcpService(announcement.Type))
     {
         return;
     }
@@ -45,7 +45,7 @@ browser.ServiceAdded += (_, eventArgs) =>
             announcement.Hostname,
             address,
             announcement.Port);
-    }*/
+    }
 
     Console.WriteLine($"[+] Found TCP service: {announcement.Instance} @ {announcement.Hostname}:{announcement.Port}");
 };
