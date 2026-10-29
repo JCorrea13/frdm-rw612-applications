@@ -156,6 +156,38 @@ bool wifi_credentials_store(const char *ssid, const char *password)
     return true;
 }
 
+bool wifi_credentials_clear(void)
+{
+    wifi_credentials_store_t stored;
+    uint32_t raw[(sizeof(stored) + sizeof(uint32_t) - 1U) / sizeof(uint32_t)] = {0};
+    const uint8_t *bytes = (const uint8_t *)raw;
+
+    if (mflash_drv_init() != 0)
+    {
+        return false;
+    }
+
+    if (mflash_drv_sector_erase(WIFI_CREDENTIALS_STORAGE_OFFSET) != kStatus_Success)
+    {
+        return false;
+    }
+
+    if (mflash_drv_read(WIFI_CREDENTIALS_STORAGE_OFFSET, raw, sizeof(stored)) != kStatus_Success)
+    {
+        return false;
+    }
+
+    for (size_t i = 0U; i < sizeof(stored); i++)
+    {
+        if (bytes[i] != 0xFFU)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 static bool wifi_parse_key_value(const char *payload, char *ssid, size_t ssidSize, char *password, size_t passwordSize)
 {
     const char *ssidStart;

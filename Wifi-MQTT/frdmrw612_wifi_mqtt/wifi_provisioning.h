@@ -10,6 +10,7 @@
 
 bool wifi_credentials_loaded(char *ssid, size_t ssidLength, char *password, size_t passwordLength);
 bool wifi_credentials_store(const char *ssid, const char *password);
+bool wifi_credentials_clear(void);
 void wifi_enter_provisioning_mode(void);
 
 #endif

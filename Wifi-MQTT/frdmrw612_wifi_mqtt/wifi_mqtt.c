@@ -104,6 +104,30 @@ static bool ConnectToSavedNetwork(void)
 static void main_task(void *arg)
 {
     uint32_t result = 0;
+    gpio_pin_config_t button_config = {kGPIO_DigitalInput, 0U};
+    bool startup_button_pressed;
+
+    /* Check SW2 at startup, before any saved credentials can be used. */
+    GPIO_PortInit(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT);
+    GPIO_PinInit(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN, &button_config);
+    startup_button_pressed = (GPIO_PinRead(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN) == 0U);
+    if (startup_button_pressed)
+    {
+        vTaskDelay(pdMS_TO_TICKS(30U));
+        startup_button_pressed = (GPIO_PinRead(BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN) == 0U);
+    }
+
+    if (startup_button_pressed)
+    {
+        if (wifi_credentials_clear())
+        {
+            PRINTF("[i] SW2 held at startup; saved Wi-Fi credentials deleted.\r\n");
+        }
+        else
+        {
+            PRINTF("[!] Failed to delete saved Wi-Fi credentials.\r\n");
+        }
+    }
 
     PRINTF("\r\n************************************************\r\n");
     PRINTF(" MQTT client example\r\n");
